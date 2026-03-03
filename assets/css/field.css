@@ -1,0 +1,123 @@
+/* Outer container */
+.acf-icon-picker-wrap {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #fff;
+  max-width: 600px;
+}
+
+/* Search bar */
+.acf-icon-search {
+  position: relative;
+  border-bottom: 1px solid #ddd;
+}
+.acf-icon-search .dashicons {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+.acf-icon-search-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  padding: 10px 12px 10px 34px;
+  font-size: 13px;
+  box-sizing: border-box;
+  background: transparent;
+}
+
+/* Icon grid */
+.icon-tiles-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 8px;
+}
+
+/* Individual tile */
+.icon-tile {
+  width: 44px;
+  height: 44px;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-sizing: border-box;
+  transition: border-color 0.1s ease;
+}
+.icon-tile input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.icon-tile:hover {
+  border-color: #0073aa;
+}
+.icon-tile.selected {
+  border-color: #0073aa;
+}
+.icon-tile .icon-preview {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.icon-tile .icon-preview svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Tooltip on hover — shown via title attr by browser, but also CSS tooltip */
+.icon-tile::after {
+  content: attr(title);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+  color: #333;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 100;
+}
+.icon-tile:hover::after {
+  opacity: 1;
+}
+
+/* None/empty tile */
+.icon-tile .icon-preview--empty .dashicons {
+  font-size: 18px;
+  color: #bbb;
+}
+
+/* Hidden tiles (search filter) */
+.icon-tile.hidden {
+  display: none;
+}
+
+/* No icons message */
+.acf-custom-icon-no-icons {
+  padding: 12px;
+  color: #666;
+  font-size: 13px;
+  margin: 0;
+}

@@ -1,0 +1,145 @@
+/* Enforce hidden attribute within icon tiles */
+.acf-icon-item [hidden] {
+    display: none !important;
+}
+
+/* === Icon Library Grid === */
+.acf-icon-library__grid-section {
+    margin-top: 24px;
+}
+
+.acf-icon-library__grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 16px 0;
+}
+
+.acf-icon-item {
+    width: 120px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px 10px;
+    box-sizing: border-box;
+}
+
+.acf-icon-item__preview {
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.acf-icon-item__preview svg,
+.acf-icon-item__preview img {
+    width: 45px;
+    height: 45px;
+    display: block;
+    filter: brightness(0);
+}
+
+.acf-icon-item__name {
+    font-size: 11px;
+    color: #555;
+    width: 100%;
+    text-align: center;
+    margin-top: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.acf-icon-item__actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-top: 4px;
+}
+
+.icon-delete-form {
+    display: inline-flex;
+    margin: 0;
+    padding: 0;
+}
+
+/* Icon action buttons */
+.icon-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 3px;
+    color: #787c82;
+    transition: color 0.1s, background 0.1s;
+}
+
+.icon-action-btn:hover,
+.icon-action-btn:focus {
+    color: #1d2327;
+    background: #f0f0f1;
+    outline: none;
+}
+
+.icon-action-btn .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.icon-action-btn--delete {
+    color: #d63638;
+}
+
+.icon-action-btn--delete:hover,
+.icon-action-btn--delete:focus {
+    color: #b32d2e;
+    background: #fce8e8;
+}
+
+.icon-action-btn--save {
+    color: #007017;
+}
+
+.icon-action-btn--save:hover,
+.icon-action-btn--save:focus {
+    color: #005c12;
+    background: #e6f4e6;
+}
+
+/* Rename form */
+.acf-icon-item__rename {
+    width: 100%;
+    margin-top: 5px;
+}
+
+.acf-icon-item__rename input[type="text"] {
+    width: 100%;
+    font-size: 11px;
+    padding: 2px 4px;
+    box-sizing: border-box;
+    margin-bottom: 4px;
+    border: 1px solid #8c8f94;
+    border-radius: 3px;
+}
+
+.rename-actions {
+    display: flex;
+    gap: 2px;
+    justify-content: center;
+}
+
+/* Upload section */
+.acf-icon-library__upload-section {
+    max-width: 500px;
+}
