@@ -34,31 +34,6 @@ class ACF_Icon_Admin_Page {
 	const NONCE_ACTION = 'acf_icon_library_nonce';
 
 	/**
-	 * Storage instance.
-	 *
-	 * @var ACF_Icon_Storage
-	 */
-	private ACF_Icon_Storage $storage;
-
-	/**
-	 * SVG sanitizer instance.
-	 *
-	 * @var ACF_SVG_Sanitizer
-	 */
-	private ACF_SVG_Sanitizer $sanitizer;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param ACF_Icon_Storage  $storage   Icon storage instance.
-	 * @param ACF_SVG_Sanitizer $sanitizer SVG sanitizer instance.
-	 */
-	public function __construct( ACF_Icon_Storage $storage, ACF_SVG_Sanitizer $sanitizer ) {
-		$this->storage   = $storage;
-		$this->sanitizer = $sanitizer;
-	}
-
-	/**
 	 * Register hooks.
 	 *
 	 * @return void
@@ -99,18 +74,20 @@ class ACF_Icon_Admin_Page {
 			return;
 		}
 
+		$version = defined( 'ACF_CUSTOM_ICON_VERSION' ) ? ACF_CUSTOM_ICON_VERSION : '1.0.0';
+
 		wp_enqueue_style(
 			'acf-icon-library-admin',
 			plugin_dir_url( dirname( __FILE__ ) ) . 'assets/css/admin.css',
 			array(),
-			'1.0.0'
+			$version
 		);
 
 		wp_enqueue_script(
 			'acf-icon-library-admin',
 			plugin_dir_url( dirname( __FILE__ ) ) . 'assets/js/admin.js',
 			array(),
-			'1.0.0',
+			$version,
 			true
 		);
 	}
@@ -126,7 +103,7 @@ class ACF_Icon_Admin_Page {
 		}
 
 		$notice = $this->get_notice();
-		$icons  = $this->storage->get_all();
+		$icons  = ACF_Icon_Storage::get_all();
 		?>
 		<div class="wrap acf-icon-library">
 			<h1><?php esc_html_e( 'Icon Library', 'acf-custom-icon' ); ?></h1>
@@ -205,15 +182,18 @@ class ACF_Icon_Admin_Page {
 							$icon_name = esc_html( $icon['name'] );
 						?>
 							<div class="acf-icon-item">
-								<div class="acf-icon-item__preview">
-									<?php $this->render_icon_preview( $icon ); ?>
-								</div>
-								<div class="acf-icon-item__name" title="<?php echo $icon_name; ?>">
-									<?php echo $icon_name; ?>
+								<div class="acf-icon-item__inner">
+									<div class="acf-icon-item__preview">
+										<?php $this->render_icon_preview( $icon ); ?>
+									</div>
+									<div class="acf-icon-item__name" title="<?php echo esc_attr( $icon['name'] ); ?>">
+										<?php echo esc_html( $icon['name'] ); ?>
+									</div>
 								</div>
 								<div class="acf-icon-item__actions">
 									<button type="button" class="icon-action-btn icon-edit-btn" title="Rename">
 										<span class="dashicons dashicons-edit" aria-hidden="true"></span>
+										<span class="screen-reader-text"><?php esc_html_e( 'Rename', 'acf-custom-icon' ); ?></span>
 									</button>
 									<form
 										method="post"
@@ -226,6 +206,7 @@ class ACF_Icon_Admin_Page {
 										<input type="hidden" name="icon_id" value="<?php echo $icon_id; ?>">
 										<button type="submit" class="icon-action-btn icon-action-btn--delete" title="Delete">
 											<span class="dashicons dashicons-trash" aria-hidden="true"></span>
+											<span class="screen-reader-text"><?php esc_html_e( 'Delete', 'acf-custom-icon' ); ?></span>
 										</button>
 									</form>
 								</div>
@@ -246,9 +227,11 @@ class ACF_Icon_Admin_Page {
 										<div class="rename-actions">
 											<button type="submit" class="icon-action-btn icon-action-btn--save" title="Save">
 												<span class="dashicons dashicons-yes" aria-hidden="true"></span>
+												<span class="screen-reader-text"><?php esc_html_e( 'Save', 'acf-custom-icon' ); ?></span>
 											</button>
 											<button type="button" class="icon-action-btn icon-action-btn--cancel icon-rename-cancel" title="Cancel">
 												<span class="dashicons dashicons-no" aria-hidden="true"></span>
+												<span class="screen-reader-text"><?php esc_html_e( 'Cancel', 'acf-custom-icon' ); ?></span>
 											</button>
 										</div>
 									</form>
@@ -277,7 +260,7 @@ class ACF_Icon_Admin_Page {
 
 			if ( $svg_content ) {
 				// Define allowed SVG tags and attributes for wp_kses().
-				$allowed_svg = $this->get_allowed_svg_kses();
+				$allowed_svg = ACF_SVG_Sanitizer::get_allowed_svg_tags();
 				echo wp_kses( $svg_content, $allowed_svg );
 				return;
 			}
@@ -333,8 +316,8 @@ class ACF_Icon_Admin_Page {
 			return;
 		}
 
-		$ext          = $file_type['ext'];
-		$svg_content  = null;
+		$ext     = $file_type['ext'];
+		$raw_svg = null;
 
 		if ( 'svg' === $ext ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local temp file.
@@ -344,18 +327,11 @@ class ACF_Icon_Admin_Page {
 				$this->redirect_with_notice( 'error', __( 'Could not read uploaded file.', 'acf-custom-icon' ) );
 				return;
 			}
-
-			$svg_content = $this->sanitizer->sanitize( $raw_svg );
-
-			if ( empty( $svg_content ) ) {
-				$this->redirect_with_notice( 'error', __( 'SVG file failed sanitization. Please upload a valid SVG.', 'acf-custom-icon' ) );
-				return;
-			}
 		}
 
-		$result = $this->storage->add( $icon_name, $svg_content, $ext, $file );
+		$result = ACF_Icon_Storage::add( $icon_name, $raw_svg, $ext, $file );
 
-		if ( $result ) {
+		if ( $result && ! is_wp_error( $result ) ) {
 			$this->redirect_with_notice( 'success', __( 'Icon uploaded successfully.', 'acf-custom-icon' ) );
 		} else {
 			$this->redirect_with_notice( 'error', __( 'Failed to save icon. Please try again.', 'acf-custom-icon' ) );
@@ -383,7 +359,7 @@ class ACF_Icon_Admin_Page {
 			return;
 		}
 
-		$result = $this->storage->delete( $icon_id );
+		$result = ACF_Icon_Storage::delete( $icon_id );
 
 		if ( $result ) {
 			$this->redirect_with_notice( 'success', __( 'Icon deleted successfully.', 'acf-custom-icon' ) );
@@ -460,113 +436,4 @@ class ACF_Icon_Admin_Page {
 		return null;
 	}
 
-	/**
-	 * Return the allowed SVG tags and attributes for wp_kses().
-	 *
-	 * @return array<string, array<string, bool>>
-	 */
-	private function get_allowed_svg_kses(): array {
-		return array(
-			'svg'      => array(
-				'xmlns'       => true,
-				'viewbox'     => true,
-				'width'       => true,
-				'height'      => true,
-				'fill'        => true,
-				'stroke'      => true,
-				'class'       => true,
-				'aria-hidden' => true,
-				'role'        => true,
-				'focusable'   => true,
-			),
-			'path'     => array(
-				'd'               => true,
-				'fill'            => true,
-				'fill-rule'       => true,
-				'clip-rule'       => true,
-				'stroke'          => true,
-				'stroke-width'    => true,
-				'stroke-linecap'  => true,
-				'stroke-linejoin' => true,
-			),
-			'circle'   => array(
-				'cx'           => true,
-				'cy'           => true,
-				'r'            => true,
-				'fill'         => true,
-				'stroke'       => true,
-				'stroke-width' => true,
-			),
-			'rect'     => array(
-				'x'            => true,
-				'y'            => true,
-				'width'        => true,
-				'height'       => true,
-				'rx'           => true,
-				'ry'           => true,
-				'fill'         => true,
-				'stroke'       => true,
-				'stroke-width' => true,
-			),
-			'line'     => array(
-				'x1'           => true,
-				'y1'           => true,
-				'x2'           => true,
-				'y2'           => true,
-				'stroke'       => true,
-				'stroke-width' => true,
-				'stroke-linecap' => true,
-			),
-			'polyline' => array(
-				'points'       => true,
-				'fill'         => true,
-				'stroke'       => true,
-				'stroke-width' => true,
-			),
-			'polygon'  => array(
-				'points'       => true,
-				'fill'         => true,
-				'stroke'       => true,
-				'stroke-width' => true,
-			),
-			'ellipse'  => array(
-				'cx'           => true,
-				'cy'           => true,
-				'rx'           => true,
-				'ry'           => true,
-				'fill'         => true,
-				'stroke'       => true,
-				'stroke-width' => true,
-			),
-			'g'        => array(
-				'fill'      => true,
-				'stroke'    => true,
-				'transform' => true,
-				'class'     => true,
-			),
-			'defs'     => array(),
-			'clippath' => array(
-				'id' => true,
-			),
-			'mask'     => array(
-				'id' => true,
-			),
-			'use'      => array(
-				'xlink:href' => true,
-				'href'       => true,
-				'x'          => true,
-				'y'          => true,
-				'width'      => true,
-				'height'     => true,
-			),
-			'symbol'   => array(
-				'id'      => true,
-				'viewbox' => true,
-				'width'   => true,
-				'height'  => true,
-			),
-			'title'    => array(),
-			'desc'     => array(),
-		);
-	}
 }

@@ -16,20 +16,31 @@
 }
 
 .acf-icon-item {
-    width: 120px;
+    width: 160px;
     border: 1px solid #ddd;
-    border-radius: 6px;
-    background: #fff;
+    border-radius: 8px;
+    background: #f6f7f7;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 15px 10px;
+    padding: 12px;
+    box-sizing: border-box;
+}
+
+.acf-icon-item__inner {
+    background: #fff;
+    border-radius: 6px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 10px 14px;
     box-sizing: border-box;
 }
 
 .acf-icon-item__preview {
-    width: 45px;
-    height: 45px;
+    width: 56px;
+    height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -38,18 +49,19 @@
 
 .acf-icon-item__preview svg,
 .acf-icon-item__preview img {
-    width: 45px;
-    height: 45px;
+    width: 56px;
+    height: 56px;
     display: block;
+    /* Intentional: force monochrome so icons look uniform in the library grid */
     filter: brightness(0);
 }
 
 .acf-icon-item__name {
-    font-size: 11px;
-    color: #555;
+    font-size: 13px;
+    color: #1d2327;
     width: 100%;
     text-align: center;
-    margin-top: 5px;
+    margin-top: 10px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -58,8 +70,9 @@
 .acf-icon-item__actions {
     display: flex;
     align-items: center;
-    gap: 2px;
-    margin-top: 4px;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 10px;
 }
 
 .icon-delete-form {
@@ -84,17 +97,21 @@
     transition: color 0.1s, background 0.1s;
 }
 
-.icon-action-btn:hover,
+.icon-action-btn:hover {
+    color: #1d2327;
+    background: #f0f0f1;
+}
 .icon-action-btn:focus {
     color: #1d2327;
     background: #f0f0f1;
     outline: none;
+    box-shadow: 0 0 0 2px #0073aa;
 }
 
 .icon-action-btn .dashicons {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
 }
 
 .icon-action-btn--delete {
@@ -120,7 +137,7 @@
 /* Rename form */
 .acf-icon-item__rename {
     width: 100%;
-    margin-top: 5px;
+    margin-top: 10px;
 }
 
 .acf-icon-item__rename input[type="text"] {
@@ -135,8 +152,7 @@
 
 .rename-actions {
     display: flex;
-    gap: 2px;
-    justify-content: center;
+    justify-content: space-between;
 }
 
 /* Upload section */

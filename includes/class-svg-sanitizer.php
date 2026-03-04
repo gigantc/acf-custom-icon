@@ -38,16 +38,6 @@ class ACF_SVG_Sanitizer {
 	);
 
 	/**
-	 * Sanitize SVG content.
-	 *
-	 * @param string $svg_content Raw SVG markup string.
-	 * @return string|false Sanitized SVG string, or false on failure.
-	 */
-	public function sanitize( $svg_content ) {
-		return self::sanitize_svg( $svg_content );
-	}
-
-	/**
 	 * Static sanitize method for direct calls.
 	 *
 	 * @param string $svg_content Raw SVG markup string.
@@ -122,6 +112,184 @@ class ACF_SVG_Sanitizer {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Returns the allowed SVG tags and attributes array for wp_kses().
+	 *
+	 * Only permits safe, presentational SVG elements. Strips any script
+	 * or event-handler attributes to prevent XSS from uploaded SVGs.
+	 * Filterable via the 'acf_custom_icon_allowed_svg_tags' filter.
+	 *
+	 * @return array Allowed tags and attributes for wp_kses().
+	 */
+	public static function get_allowed_svg_tags() {
+		$tags = array(
+			'svg'            => array(
+				'xmlns'           => true,
+				'viewbox'         => true,
+				'width'           => true,
+				'height'          => true,
+				'fill'            => true,
+				'stroke'          => true,
+				'stroke-width'    => true,
+				'stroke-linecap'  => true,
+				'stroke-linejoin' => true,
+				'aria-hidden'     => true,
+				'role'            => true,
+				'class'           => true,
+				'style'           => true,
+				'focusable'       => true,
+			),
+			'g'              => array(
+				'fill'         => true,
+				'stroke'       => true,
+				'transform'    => true,
+				'class'        => true,
+				'style'        => true,
+				'fill-rule'    => true,
+				'clip-rule'    => true,
+				'stroke-width' => true,
+			),
+			'path'           => array(
+				'd'               => true,
+				'fill'            => true,
+				'stroke'          => true,
+				'stroke-width'    => true,
+				'stroke-linecap'  => true,
+				'stroke-linejoin' => true,
+				'fill-rule'       => true,
+				'clip-rule'       => true,
+				'class'           => true,
+				'style'           => true,
+				'transform'       => true,
+			),
+			'circle'         => array(
+				'cx'           => true,
+				'cy'           => true,
+				'r'            => true,
+				'fill'         => true,
+				'stroke'       => true,
+				'stroke-width' => true,
+				'class'        => true,
+				'style'        => true,
+			),
+			'rect'           => array(
+				'x'            => true,
+				'y'            => true,
+				'width'        => true,
+				'height'       => true,
+				'rx'           => true,
+				'ry'           => true,
+				'fill'         => true,
+				'stroke'       => true,
+				'stroke-width' => true,
+				'class'        => true,
+				'style'        => true,
+				'transform'    => true,
+			),
+			'line'           => array(
+				'x1'             => true,
+				'y1'             => true,
+				'x2'             => true,
+				'y2'             => true,
+				'stroke'         => true,
+				'stroke-width'   => true,
+				'stroke-linecap' => true,
+				'class'          => true,
+				'style'          => true,
+			),
+			'polyline'       => array(
+				'points'          => true,
+				'fill'            => true,
+				'stroke'          => true,
+				'stroke-width'    => true,
+				'stroke-linecap'  => true,
+				'stroke-linejoin' => true,
+				'class'           => true,
+				'style'           => true,
+			),
+			'polygon'        => array(
+				'points'       => true,
+				'fill'         => true,
+				'stroke'       => true,
+				'stroke-width' => true,
+				'class'        => true,
+				'style'        => true,
+			),
+			'ellipse'        => array(
+				'cx'           => true,
+				'cy'           => true,
+				'rx'           => true,
+				'ry'           => true,
+				'fill'         => true,
+				'stroke'       => true,
+				'stroke-width' => true,
+				'class'        => true,
+				'style'        => true,
+			),
+			'defs'           => array(),
+			'title'          => array(),
+			'desc'           => array(),
+			'symbol'         => array(
+				'id'      => true,
+				'viewbox' => true,
+				'width'   => true,
+				'height'  => true,
+			),
+			'use'            => array(
+				'href'       => true,
+				'xlink:href' => true,
+				'x'          => true,
+				'y'          => true,
+				'width'      => true,
+				'height'     => true,
+			),
+			'mask'           => array(
+				'id'         => true,
+				'x'          => true,
+				'y'          => true,
+				'width'      => true,
+				'height'     => true,
+				'maskunits'  => true,
+			),
+			'clippath'       => array(
+				'id'             => true,
+				'clippathunits'  => true,
+			),
+			'lineargradient' => array(
+				'id'                => true,
+				'x1'                => true,
+				'y1'                => true,
+				'x2'                => true,
+				'y2'                => true,
+				'gradientunits'     => true,
+				'gradienttransform' => true,
+			),
+			'radialgradient' => array(
+				'id'                => true,
+				'cx'                => true,
+				'cy'                => true,
+				'r'                 => true,
+				'fx'                => true,
+				'fy'                => true,
+				'gradientunits'     => true,
+				'gradienttransform' => true,
+			),
+			'stop'           => array(
+				'offset'       => true,
+				'stop-color'   => true,
+				'stop-opacity' => true,
+				'style'        => true,
+			),
+		);
+
+		/**
+		 * Filters the allowed SVG tags and attributes for wp_kses().
+		 *
+		 * @param array $tags Allowed tags and attributes.
+		 */
+		return apply_filters( 'acf_custom_icon_allowed_svg_tags', $tags );
 	}
 
 	/**

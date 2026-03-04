@@ -2,7 +2,7 @@
 .acf-icon-picker-wrap {
   border: 1px solid #ddd;
   border-radius: 4px;
-  overflow: hidden;
+  overflow: visible;
   background: #fff;
   max-width: 600px;
 }
@@ -61,7 +61,8 @@
   height: 0;
   pointer-events: none;
 }
-.icon-tile:hover {
+.icon-tile:hover,
+.icon-tile:focus-within {
   border-color: #0073aa;
 }
 .icon-tile.selected {
@@ -77,6 +78,7 @@
 .icon-tile .icon-preview svg {
   width: 100%;
   height: 100%;
+  /* Intentional: force monochrome so icons look uniform in the picker */
   filter: brightness(0);
 }
 
@@ -100,7 +102,8 @@
   transition: opacity 0.15s ease;
   z-index: 100;
 }
-.icon-tile:hover::after {
+.icon-tile:hover::after,
+.icon-tile:focus-within::after {
   opacity: 1;
 }
 

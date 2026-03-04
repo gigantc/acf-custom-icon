@@ -155,35 +155,17 @@ if ( ! class_exists( 'ACF_Field_Custom_Icon' ) ) :
 			}
 
 			$svg = ACF_Icon_Storage::get_svg_content( $value );
+			$svg = is_string( $svg ) ? $svg : '';
 
-			return is_string( $svg ) ? $svg : '';
-		}
-
-		/**
-		 * Render optional settings for this field type in the ACF field group editor.
-		 *
-		 * Adds a "Picker icon size" select so admins can control how large icons
-		 * appear inside the picker grid tiles.
-		 *
-		 * @param array $field The ACF field array.
-		 * @return void
-		 */
-		public function render_field_settings( $field ) {
-			acf_render_field_setting(
-				$field,
-				array(
-					'label'        => __( 'Picker Icon Size', 'acf-custom-icon' ),
-					'instructions' => __( 'Display size of icons inside the picker grid.', 'acf-custom-icon' ),
-					'type'         => 'select',
-					'name'         => 'picker_icon_size',
-					'choices'      => array(
-						'small'  => __( 'Small (24px)', 'acf-custom-icon' ),
-						'medium' => __( 'Medium (40px)', 'acf-custom-icon' ),
-						'large'  => __( 'Large (56px)', 'acf-custom-icon' ),
-					),
-					'default_value' => 'medium',
-				)
-			);
+			/**
+			 * Filters the SVG markup returned by get_field() for a custom icon field.
+			 *
+			 * @param string $svg     SVG markup string.
+			 * @param mixed  $value   The raw stored icon ID.
+			 * @param int    $post_id The post ID.
+			 * @param array  $field   The ACF field array.
+			 */
+			return apply_filters( 'acf_custom_icon_format_value', $svg, $value, $post_id, $field );
 		}
 
 		/**
@@ -216,169 +198,13 @@ if ( ! class_exists( 'ACF_Field_Custom_Icon' ) ) :
 		/**
 		 * Returns the allowed SVG tags and attributes array for wp_kses().
 		 *
-		 * Only permits safe, presentational SVG elements. Strips any script
-		 * or event-handler attributes to prevent XSS from uploaded SVGs.
+		 * Delegates to ACF_SVG_Sanitizer::get_allowed_svg_tags() so the
+		 * allowlist is defined in one place.
 		 *
 		 * @return array Allowed tags and attributes for wp_kses().
 		 */
 		private function get_allowed_svg_tags() {
-			return array(
-				'svg'      => array(
-					'xmlns'           => true,
-					'viewbox'         => true,
-					'width'           => true,
-					'height'          => true,
-					'fill'            => true,
-					'stroke'          => true,
-					'stroke-width'    => true,
-					'stroke-linecap'  => true,
-					'stroke-linejoin' => true,
-					'aria-hidden'     => true,
-					'role'            => true,
-					'class'           => true,
-					'style'           => true,
-				),
-				'g'        => array(
-					'fill'         => true,
-					'stroke'       => true,
-					'transform'    => true,
-					'class'        => true,
-					'style'        => true,
-					'fill-rule'    => true,
-					'clip-rule'    => true,
-					'stroke-width' => true,
-				),
-				'path'     => array(
-					'd'               => true,
-					'fill'            => true,
-					'stroke'          => true,
-					'stroke-width'    => true,
-					'stroke-linecap'  => true,
-					'stroke-linejoin' => true,
-					'fill-rule'       => true,
-					'clip-rule'       => true,
-					'class'           => true,
-					'style'           => true,
-					'transform'       => true,
-				),
-				'circle'   => array(
-					'cx'           => true,
-					'cy'           => true,
-					'r'            => true,
-					'fill'         => true,
-					'stroke'       => true,
-					'stroke-width' => true,
-					'class'        => true,
-					'style'        => true,
-				),
-				'rect'     => array(
-					'x'            => true,
-					'y'            => true,
-					'width'        => true,
-					'height'       => true,
-					'rx'           => true,
-					'ry'           => true,
-					'fill'         => true,
-					'stroke'       => true,
-					'stroke-width' => true,
-					'class'        => true,
-					'style'        => true,
-					'transform'    => true,
-				),
-				'line'     => array(
-					'x1'           => true,
-					'y1'           => true,
-					'x2'           => true,
-					'y2'           => true,
-					'stroke'       => true,
-					'stroke-width' => true,
-					'stroke-linecap' => true,
-					'class'        => true,
-					'style'        => true,
-				),
-				'polyline' => array(
-					'points'       => true,
-					'fill'         => true,
-					'stroke'       => true,
-					'stroke-width' => true,
-					'stroke-linecap' => true,
-					'stroke-linejoin' => true,
-					'class'        => true,
-					'style'        => true,
-				),
-				'polygon'  => array(
-					'points'       => true,
-					'fill'         => true,
-					'stroke'       => true,
-					'stroke-width' => true,
-					'class'        => true,
-					'style'        => true,
-				),
-				'ellipse'  => array(
-					'cx'           => true,
-					'cy'           => true,
-					'rx'           => true,
-					'ry'           => true,
-					'fill'         => true,
-					'stroke'       => true,
-					'stroke-width' => true,
-					'class'        => true,
-					'style'        => true,
-				),
-				'defs'     => array(),
-				'title'    => array(),
-				'desc'     => array(),
-				'symbol'   => array(
-					'id'      => true,
-					'viewbox' => true,
-					'width'   => true,
-					'height'  => true,
-				),
-				'use'      => array(
-					'href'   => true,
-					'x'      => true,
-					'y'      => true,
-					'width'  => true,
-					'height' => true,
-				),
-				'mask'     => array(
-					'id'      => true,
-					'x'       => true,
-					'y'       => true,
-					'width'   => true,
-					'height'  => true,
-					'maskUnits' => true,
-				),
-				'clippath' => array(
-					'id'        => true,
-					'clipPathUnits' => true,
-				),
-				'lineargradient' => array(
-					'id'                => true,
-					'x1'               => true,
-					'y1'               => true,
-					'x2'               => true,
-					'y2'               => true,
-					'gradientUnits'    => true,
-					'gradientTransform' => true,
-				),
-				'radialgradient' => array(
-					'id'                => true,
-					'cx'               => true,
-					'cy'               => true,
-					'r'                => true,
-					'fx'               => true,
-					'fy'               => true,
-					'gradientUnits'    => true,
-					'gradientTransform' => true,
-				),
-				'stop'     => array(
-					'offset'     => true,
-					'stop-color' => true,
-					'stop-opacity' => true,
-					'style'      => true,
-				),
-			);
+			return ACF_SVG_Sanitizer::get_allowed_svg_tags();
 		}
 	}
 

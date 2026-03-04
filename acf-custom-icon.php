@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ACF Custom Icon
  * Description: Adds a Custom Icon field type to Advanced Custom Fields with an icon library manager.
- * Version: 1.0.1
+ * Version: 1.1.0
  * Author: Dan Freeman
  *
  * @package ACF_Custom_Icon
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ACF_CUSTOM_ICON_VERSION', '1.0.1' );
+define( 'ACF_CUSTOM_ICON_VERSION', '1.1.0' );
 define( 'ACF_CUSTOM_ICON_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ACF_CUSTOM_ICON_URL', plugin_dir_url( __FILE__ ) );
 
@@ -60,10 +60,8 @@ function acf_custom_icon_load() {
 	require_once ACF_CUSTOM_ICON_DIR . 'includes/class-acf-field-custom-icon.php';
 	require_once ACF_CUSTOM_ICON_DIR . 'includes/class-admin-page.php';
 
-	// Initialize the admin page with its dependencies.
-	$storage   = new ACF_Icon_Storage();
-	$sanitizer = new ACF_SVG_Sanitizer();
-	$admin     = new ACF_Icon_Admin_Page( $storage, $sanitizer );
+	// Initialize the admin page.
+	$admin = new ACF_Icon_Admin_Page();
 	$admin->init();
 }
 

@@ -67,10 +67,16 @@ class ACF_Icon_Storage {
 			return array();
 		}
 
-		// Re-index by icon ID so callers can use foreach ( $icons as $id => $icon ).
-		$indexed = array();
+		// Re-index by icon ID and fix URLs/paths for the current environment.
+		$upload_url = self::get_upload_url();
+		$indexed    = array();
+
 		foreach ( $raw as $icon ) {
 			if ( isset( $icon['id'] ) ) {
+				// Reconstruct URL from filename to handle environment migrations.
+				if ( ! empty( $icon['filename'] ) ) {
+					$icon['url'] = $upload_url . '/' . $icon['filename'];
+				}
 				$indexed[ $icon['id'] ] = $icon;
 			}
 		}
@@ -108,7 +114,8 @@ class ACF_Icon_Storage {
 			return false;
 		}
 
-		$path = isset( $icon['path'] ) ? $icon['path'] : '';
+		// Reconstruct the path from filename to handle database migrations between environments.
+		$path = self::resolve_icon_path( $icon );
 
 		if ( empty( $path ) || ! file_exists( $path ) ) {
 			return false;
@@ -131,6 +138,34 @@ class ACF_Icon_Storage {
 		}
 
 		return $content;
+	}
+
+	/**
+	 * Resolve the actual filesystem path for an icon.
+	 *
+	 * Prefers the stored path if it exists on disk. Falls back to
+	 * reconstructing from the filename, which handles database migrations
+	 * between environments (e.g. local to WP Engine).
+	 *
+	 * @param array $icon Icon entry array.
+	 * @return string Resolved path, or empty string if unresolvable.
+	 */
+	private static function resolve_icon_path( array $icon ) {
+		// Try the stored path first.
+		$stored_path = isset( $icon['path'] ) ? $icon['path'] : '';
+
+		if ( ! empty( $stored_path ) && file_exists( $stored_path ) ) {
+			return $stored_path;
+		}
+
+		// Fall back to reconstructing from filename.
+		$filename = isset( $icon['filename'] ) ? $icon['filename'] : '';
+
+		if ( ! empty( $filename ) ) {
+			return self::get_upload_dir() . '/' . $filename;
+		}
+
+		return '';
 	}
 
 	/**
@@ -258,36 +293,31 @@ class ACF_Icon_Storage {
 	 */
 	public static function delete( $id ) {
 		// get_all() returns ID-keyed array.
-		$icons    = self::get_all();
-		$found    = false;
-		$new_list = array();
+		$icons = self::get_all();
 
-		foreach ( $icons as $icon_id => $icon ) {
-			if ( $icon_id === $id ) {
-				$found = true;
-
-				// Remove the file from disk if it exists.
-				if ( ! empty( $icon['path'] ) && file_exists( $icon['path'] ) ) {
-					// Verify the file is inside the expected uploads directory before deleting.
-					$upload_dir = self::get_upload_dir();
-					$real_path  = realpath( $icon['path'] );
-					$real_dir   = realpath( $upload_dir );
-
-					if ( $real_path && $real_dir && 0 === strpos( $real_path, $real_dir ) ) {
-						wp_delete_file( $icon['path'] );
-					}
-				}
-			} else {
-				$new_list[] = $icon;
-			}
-		}
-
-		if ( ! $found ) {
+		if ( ! isset( $icons[ $id ] ) ) {
 			return false;
 		}
 
+		// Remove the file from disk if it exists.
+		$icon      = $icons[ $id ];
+		$file_path = self::resolve_icon_path( $icon );
+
+		if ( ! empty( $file_path ) && file_exists( $file_path ) ) {
+			// Verify the file is inside the expected uploads directory before deleting.
+			$upload_dir = self::get_upload_dir();
+			$real_path  = realpath( $file_path );
+			$real_dir   = realpath( $upload_dir );
+
+			if ( $real_path && $real_dir && 0 === strpos( $real_path, $real_dir ) ) {
+				wp_delete_file( $file_path );
+			}
+		}
+
+		unset( $icons[ $id ] );
+
 		// Save as sequential array (get_all re-indexes on read).
-		update_option( self::OPTION_KEY, array_values( $new_list ), false );
+		update_option( self::OPTION_KEY, array_values( $icons ), false );
 
 		return true;
 	}
