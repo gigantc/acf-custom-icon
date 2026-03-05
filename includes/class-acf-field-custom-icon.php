@@ -52,64 +52,91 @@ if ( ! class_exists( 'ACF_Field_Custom_Icon' ) ) :
 
 			// Allowed SVG tags and attributes for wp_kses().
 			$allowed_svg = $this->get_allowed_svg_tags();
+
+			// Get selected icon info for the preview bar.
+			$selected_name = 'None';
+			$selected_svg  = '';
+			if ( ! empty( $current_value ) && isset( $icons[ $current_value ] ) ) {
+				$selected_name = $icons[ $current_value ]['name'] ?? $current_value;
+				$svg_raw       = ACF_Icon_Storage::get_svg_content( $current_value );
+				if ( $svg_raw ) {
+					$selected_svg = wp_kses( $svg_raw, $allowed_svg );
+				}
+			}
 			?>
 			<div class="acf-icon-picker-wrap" id="<?php echo esc_attr( $field['id'] ); ?>">
-				<div class="acf-icon-search">
-					<span class="dashicons dashicons-search"></span>
-					<input type="text" class="acf-icon-search-input" placeholder="Search icons..." autocomplete="off" />
+				<div class="acf-icon-selected-bar">
+					<span class="acf-icon-selected-preview">
+						<?php if ( $selected_svg ) : ?>
+							<?php echo $selected_svg; ?>
+						<?php else : ?>
+							<span class="dashicons dashicons-minus"></span>
+						<?php endif; ?>
+					</span>
+					<span class="acf-icon-selected-name"><?php echo esc_html( $selected_name ); ?></span>
+					<button type="button" class="acf-icon-edit-btn"><?php esc_html_e( 'Edit', 'acf-custom-icon' ); ?></button>
 				</div>
 
-				<div class="icon-tiles-grid">
-					<?php // "No icon" / clear tile. ?>
-					<label
-						class="icon-tile<?php echo ( '' === $current_value ) ? ' selected' : ''; ?>"
-						data-icon-name=""
-						title="None"
-					>
-						<input
-							type="radio"
-							name="<?php echo esc_attr( $field['name'] ); ?>"
-							value=""
-							<?php checked( $current_value, '' ); ?>
-						/>
-						<div class="icon-preview icon-preview--empty">
-							<span class="dashicons dashicons-minus"></span>
-						</div>
-					</label>
+				<div class="acf-icon-picker-panel" style="display:none;">
+					<div class="acf-icon-search">
+						<span class="dashicons dashicons-search"></span>
+						<input type="text" class="acf-icon-search-input" placeholder="Search icons..." autocomplete="off" />
+					</div>
 
-					<?php if ( ! empty( $icons ) ) : ?>
-						<?php foreach ( $icons as $icon_id => $icon ) : ?>
-							<?php
-							$svg_content = class_exists( 'ACF_Icon_Storage' ) ? ACF_Icon_Storage::get_svg_content( $icon_id ) : '';
-							$icon_name   = isset( $icon['name'] ) ? $icon['name'] : $icon_id;
-							$is_selected = ( (string) $icon_id === (string) $current_value );
-							$tile_class  = 'icon-tile' . ( $is_selected ? ' selected' : '' );
-							?>
-							<label
-								class="<?php echo esc_attr( $tile_class ); ?>"
-								data-icon-name="<?php echo esc_attr( $icon_name ); ?>"
-								title="<?php echo esc_attr( $icon_name ); ?>"
-							>
-								<input
-									type="radio"
-									name="<?php echo esc_attr( $field['name'] ); ?>"
-									value="<?php echo esc_attr( $icon_id ); ?>"
-									<?php checked( $is_selected ); ?>
-								/>
-								<div class="icon-preview">
-									<?php
-									if ( ! empty( $svg_content ) ) {
-										echo wp_kses( $svg_content, $allowed_svg );
-									}
-									?>
-								</div>
-							</label>
-						<?php endforeach; ?>
-					<?php else : ?>
-						<p class="acf-custom-icon-no-icons">
-							<?php esc_html_e( 'No icons uploaded yet. Add icons via the Icon Manager.', 'acf-custom-icon' ); ?>
-						</p>
-					<?php endif; ?>
+					<div class="icon-tiles-grid">
+						<?php // "No icon" / clear tile. ?>
+						<label
+							class="icon-tile<?php echo ( '' === $current_value ) ? ' selected' : ''; ?>"
+							data-icon-name=""
+							data-icon-svg=""
+							title="None"
+						>
+							<input
+								type="radio"
+								name="<?php echo esc_attr( $field['name'] ); ?>"
+								value=""
+								<?php checked( $current_value, '' ); ?>
+							/>
+							<div class="icon-preview icon-preview--empty">
+								<span class="dashicons dashicons-minus"></span>
+							</div>
+						</label>
+
+						<?php if ( ! empty( $icons ) ) : ?>
+							<?php foreach ( $icons as $icon_id => $icon ) : ?>
+								<?php
+								$svg_content = class_exists( 'ACF_Icon_Storage' ) ? ACF_Icon_Storage::get_svg_content( $icon_id ) : '';
+								$icon_name   = isset( $icon['name'] ) ? $icon['name'] : $icon_id;
+								$is_selected = ( (string) $icon_id === (string) $current_value );
+								$tile_class  = 'icon-tile' . ( $is_selected ? ' selected' : '' );
+								?>
+								<label
+									class="<?php echo esc_attr( $tile_class ); ?>"
+									data-icon-name="<?php echo esc_attr( $icon_name ); ?>"
+									data-icon-svg="<?php echo esc_attr( $svg_content ); ?>"
+									title="<?php echo esc_attr( $icon_name ); ?>"
+								>
+									<input
+										type="radio"
+										name="<?php echo esc_attr( $field['name'] ); ?>"
+										value="<?php echo esc_attr( $icon_id ); ?>"
+										<?php checked( $is_selected ); ?>
+									/>
+									<div class="icon-preview">
+										<?php
+										if ( ! empty( $svg_content ) ) {
+											echo wp_kses( $svg_content, $allowed_svg );
+										}
+										?>
+									</div>
+								</label>
+							<?php endforeach; ?>
+						<?php else : ?>
+							<p class="acf-custom-icon-no-icons">
+								<?php esc_html_e( 'No icons uploaded yet. Add icons via the Icon Manager.', 'acf-custom-icon' ); ?>
+							</p>
+						<?php endif; ?>
+					</div>
 				</div>
 			</div>
 			<?php

@@ -1,8 +1,36 @@
 (function() {
     'use strict';
 
+    function updateSelectedBar(picker, tile) {
+        var nameEl = picker.querySelector('.acf-icon-selected-name');
+        var previewEl = picker.querySelector('.acf-icon-selected-preview');
+        if (!nameEl || !previewEl) return;
+
+        var iconName = tile.getAttribute('title') || 'None';
+        var iconSvg = tile.getAttribute('data-icon-svg');
+
+        nameEl.textContent = iconName;
+
+        if (iconSvg) {
+            previewEl.innerHTML = iconSvg;
+        } else {
+            previewEl.innerHTML = '<span class="dashicons dashicons-minus"></span>';
+        }
+    }
+
     function initIconPicker(picker) {
         var tiles = picker.querySelectorAll('.icon-tile');
+        var panel = picker.querySelector('.acf-icon-picker-panel');
+        var editBtn = picker.querySelector('.acf-icon-edit-btn');
+
+        // Toggle panel on edit/close button click
+        if (editBtn && panel) {
+            editBtn.addEventListener('click', function() {
+                var isOpen = panel.style.display !== 'none';
+                panel.style.display = isOpen ? 'none' : 'block';
+                editBtn.textContent = isOpen ? 'Edit' : 'Close';
+            });
+        }
 
         tiles.forEach(function(tile) {
             tile.addEventListener('click', function() {
@@ -18,6 +46,11 @@
                 radio.checked = true;
                 tile.classList.add('selected');
                 radio.dispatchEvent(new Event('change', { bubbles: true }));
+
+                // Update the selected bar and collapse the panel
+                updateSelectedBar(picker, tile);
+                if (panel) panel.style.display = 'none';
+                if (editBtn) editBtn.textContent = 'Edit';
             });
         });
 

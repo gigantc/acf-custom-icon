@@ -81,6 +81,11 @@ class ACF_Icon_Storage {
 			}
 		}
 
+		// Sort alphabetically by icon name.
+		uasort( $indexed, function ( $a, $b ) {
+			return strnatcasecmp( $a['name'] ?? '', $b['name'] ?? '' );
+		} );
+
 		return $indexed;
 	}
 
