@@ -137,35 +137,44 @@ if ( ! class_exists( 'ACF_Field_Custom_Icon' ) ) :
 		/**
 		 * Format the stored value for use in templates.
 		 *
-		 * Retrieves the raw SVG markup for the stored icon ID so that calling
-		 * get_field() in a template returns inline SVG code ready to output.
+		 * Returns an associative array with 'path' and 'url' keys so templates
+		 * can choose how to render the icon (inline SVG via file_get_contents,
+		 * or as an <img> tag via the URL).
 		 *
 		 * @param mixed  $value   The raw value stored in the database (icon ID).
 		 * @param int    $post_id The post ID from which the value was loaded.
 		 * @param array  $field   The ACF field array.
-		 * @return string Raw SVG markup string, or empty string if no icon set.
+		 * @return array|false Array with 'path' and 'url' keys, or false if no icon set.
 		 */
 		public function format_value( $value, $post_id, $field ) {
 			if ( empty( $value ) ) {
-				return '';
+				return false;
 			}
 
 			if ( ! class_exists( 'ACF_Icon_Storage' ) ) {
-				return '';
+				return false;
 			}
 
-			$svg = ACF_Icon_Storage::get_svg_content( $value );
-			$svg = is_string( $svg ) ? $svg : '';
+			$icon = ACF_Icon_Storage::get_by_id( $value );
+
+			if ( false === $icon ) {
+				return false;
+			}
+
+			$result = array(
+				'path' => isset( $icon['path'] ) ? $icon['path'] : '',
+				'url'  => isset( $icon['url'] ) ? $icon['url'] : '',
+			);
 
 			/**
-			 * Filters the SVG markup returned by get_field() for a custom icon field.
+			 * Filters the icon data returned by get_field() for a custom icon field.
 			 *
-			 * @param string $svg     SVG markup string.
-			 * @param mixed  $value   The raw stored icon ID.
-			 * @param int    $post_id The post ID.
-			 * @param array  $field   The ACF field array.
+			 * @param array $result  Array with 'path' and 'url' keys.
+			 * @param mixed $value   The raw stored icon ID.
+			 * @param int   $post_id The post ID.
+			 * @param array $field   The ACF field array.
 			 */
-			return apply_filters( 'acf_custom_icon_format_value', $svg, $value, $post_id, $field );
+			return apply_filters( 'acf_custom_icon_format_value', $result, $value, $post_id, $field );
 		}
 
 		/**
