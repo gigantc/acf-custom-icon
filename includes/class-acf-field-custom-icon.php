@@ -54,11 +54,13 @@ if ( ! class_exists( 'ACF_Field_Custom_Icon' ) ) :
 			$allowed_svg = $this->get_allowed_svg_tags();
 
 			// Get selected icon info for the preview bar.
-			$selected_name = 'None';
-			$selected_svg  = '';
+			$selected_name  = 'None';
+			$selected_svg   = '';
+			$selected_style = 'line';
 			if ( ! empty( $current_value ) && isset( $icons[ $current_value ] ) ) {
-				$selected_name = $icons[ $current_value ]['name'] ?? $current_value;
-				$svg_raw       = ACF_Icon_Storage::get_svg_content( $current_value );
+				$selected_name  = $icons[ $current_value ]['name'] ?? $current_value;
+				$selected_style = $icons[ $current_value ]['style'] ?? 'line';
+				$svg_raw        = ACF_Icon_Storage::get_svg_content( $current_value );
 				if ( $svg_raw ) {
 					$selected_svg = wp_kses( $svg_raw, $allowed_svg );
 				}
@@ -66,7 +68,7 @@ if ( ! class_exists( 'ACF_Field_Custom_Icon' ) ) :
 			?>
 			<div class="acf-icon-picker-wrap" id="<?php echo esc_attr( $field['id'] ); ?>">
 				<div class="acf-icon-selected-bar">
-					<span class="acf-icon-selected-preview">
+					<span class="acf-icon-selected-preview" data-icon-style="<?php echo esc_attr( $selected_style ); ?>">
 						<?php if ( $selected_svg ) : ?>
 							<?php echo $selected_svg; ?>
 						<?php else : ?>
@@ -107,6 +109,7 @@ if ( ! class_exists( 'ACF_Field_Custom_Icon' ) ) :
 								<?php
 								$svg_content = class_exists( 'ACF_Icon_Storage' ) ? ACF_Icon_Storage::get_svg_content( $icon_id ) : '';
 								$icon_name   = isset( $icon['name'] ) ? $icon['name'] : $icon_id;
+								$icon_style  = isset( $icon['style'] ) ? $icon['style'] : 'line';
 								$is_selected = ( (string) $icon_id === (string) $current_value );
 								$tile_class  = 'icon-tile' . ( $is_selected ? ' selected' : '' );
 								?>
@@ -114,6 +117,7 @@ if ( ! class_exists( 'ACF_Field_Custom_Icon' ) ) :
 									class="<?php echo esc_attr( $tile_class ); ?>"
 									data-icon-name="<?php echo esc_attr( $icon_name ); ?>"
 									data-icon-svg="<?php echo esc_attr( $svg_content ); ?>"
+									data-icon-style="<?php echo esc_attr( $icon_style ); ?>"
 									title="<?php echo esc_attr( $icon_name ); ?>"
 								>
 									<input
@@ -171,7 +175,7 @@ if ( ! class_exists( 'ACF_Field_Custom_Icon' ) ) :
 		 * @param mixed  $value   The raw value stored in the database (icon ID).
 		 * @param int    $post_id The post ID from which the value was loaded.
 		 * @param array  $field   The ACF field array.
-		 * @return array|false Array with 'path' and 'url' keys, or false if no icon set.
+		 * @return array|false Array with 'path', 'url', and 'style' keys, or false if no icon set.
 		 */
 		public function format_value( $value, $post_id, $field ) {
 			if ( empty( $value ) ) {
@@ -189,8 +193,9 @@ if ( ! class_exists( 'ACF_Field_Custom_Icon' ) ) :
 			}
 
 			$result = array(
-				'path' => isset( $icon['path'] ) ? $icon['path'] : '',
-				'url'  => isset( $icon['url'] ) ? $icon['url'] : '',
+				'path'  => isset( $icon['path'] ) ? $icon['path'] : '',
+				'url'   => isset( $icon['url'] ) ? $icon['url'] : '',
+				'style' => isset( $icon['style'] ) ? $icon['style'] : 'line',
 			);
 
 			/**

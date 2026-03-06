@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ACF Custom Icon
  * Description: Adds a Custom Icon field type to Advanced Custom Fields with an icon library manager.
- * Version: 1.3.0
+ * Version: 1.4.0
  * Author: Dan Freeman
  *
  * @package ACF_Custom_Icon
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ACF_CUSTOM_ICON_VERSION', '1.3.0' );
+define( 'ACF_CUSTOM_ICON_VERSION', '1.4.0' );
 define( 'ACF_CUSTOM_ICON_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ACF_CUSTOM_ICON_URL', plugin_dir_url( __FILE__ ) );
 

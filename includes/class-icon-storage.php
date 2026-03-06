@@ -187,9 +187,10 @@ class ACF_Icon_Storage {
 	 * @param string|null $svg_content Raw SVG markup string (null for PNG uploads).
 	 * @param string      $ext         File extension: 'svg' or 'png'. Defaults to 'svg'.
 	 * @param array|null  $file        $_FILES entry for PNG uploads. Defaults to null.
+	 * @param string      $style       Icon style: 'line' or 'custom'. Defaults to 'line'.
 	 * @return string|WP_Error New icon ID on success, WP_Error on failure.
 	 */
-	public static function add( $name, $svg_content, $ext = 'svg', $file = null ) {
+	public static function add( $name, $svg_content, $ext = 'svg', $file = null, $style = 'line' ) {
 		// Validate and sanitize the name.
 		$name = sanitize_text_field( $name );
 
@@ -248,6 +249,7 @@ class ACF_Icon_Storage {
 			'path'     => $path,
 			'url'      => $url,
 			'type'     => $ext,
+			'style'    => in_array( $style, array( 'line', 'custom' ), true ) ? $style : 'line',
 		);
 
 		// Append to the index and persist.

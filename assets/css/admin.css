@@ -52,8 +52,13 @@
     width: 56px;
     height: 56px;
     display: block;
-    /* Intentional: force monochrome so icons look uniform in the library grid */
+    /* Force monochrome for line icons so they look uniform in the library grid */
     filter: brightness(0);
+}
+/* Custom icons show in full color */
+.acf-icon-item[data-icon-style="custom"] .acf-icon-item__preview svg,
+.acf-icon-item[data-icon-style="custom"] .acf-icon-item__preview img {
+    filter: none;
 }
 
 .acf-icon-item__name {

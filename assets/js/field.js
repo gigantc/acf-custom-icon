@@ -8,8 +8,10 @@
 
         var iconName = tile.getAttribute('title') || 'None';
         var iconSvg = tile.getAttribute('data-icon-svg');
+        var iconStyle = tile.getAttribute('data-icon-style') || 'line';
 
         nameEl.textContent = iconName;
+        previewEl.setAttribute('data-icon-style', iconStyle);
 
         if (iconSvg) {
             previewEl.innerHTML = iconSvg;

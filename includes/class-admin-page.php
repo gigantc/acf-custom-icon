@@ -163,6 +163,19 @@ class ACF_Icon_Admin_Page {
 									</p>
 								</td>
 							</tr>
+							<tr>
+								<th scope="row">
+									<label for="acf_icon_style">
+										<?php esc_html_e( 'Icon Style', 'acf-custom-icon' ); ?>
+									</label>
+								</th>
+								<td>
+									<select id="acf_icon_style" name="icon_style">
+										<option value="line"><?php esc_html_e( 'Line (stroke-based, e.g. Lucide)', 'acf-custom-icon' ); ?></option>
+										<option value="custom"><?php esc_html_e( 'Custom (full color, e.g. logos)', 'acf-custom-icon' ); ?></option>
+									</select>
+								</td>
+							</tr>
 						</tbody>
 					</table>
 
@@ -181,7 +194,8 @@ class ACF_Icon_Admin_Page {
 							$icon_id   = esc_attr( $icon['id'] );
 							$icon_name = esc_html( $icon['name'] );
 						?>
-							<div class="acf-icon-item">
+							<?php $icon_style = $icon['style'] ?? 'line'; ?>
+						<div class="acf-icon-item" data-icon-style="<?php echo esc_attr( $icon_style ); ?>">
 								<div class="acf-icon-item__inner">
 									<div class="acf-icon-item__preview">
 										<?php $this->render_icon_preview( $icon ); ?>
@@ -329,7 +343,8 @@ class ACF_Icon_Admin_Page {
 			}
 		}
 
-		$result = ACF_Icon_Storage::add( $icon_name, $raw_svg, $ext, $file );
+		$icon_style = isset( $_POST['icon_style'] ) ? sanitize_text_field( wp_unslash( $_POST['icon_style'] ) ) : 'line';
+		$result     = ACF_Icon_Storage::add( $icon_name, $raw_svg, $ext, $file, $icon_style );
 
 		if ( $result && ! is_wp_error( $result ) ) {
 			$this->redirect_with_notice( 'success', __( 'Icon uploaded successfully.', 'acf-custom-icon' ) );

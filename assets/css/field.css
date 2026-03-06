@@ -130,8 +130,17 @@
 .icon-tile .icon-preview svg {
   width: 100%;
   height: 100%;
-  /* Intentional: force monochrome so icons look uniform in the picker */
+  /* Force monochrome for line icons so they look uniform in the picker */
   filter: brightness(0);
+}
+/* Custom icons show in full color */
+.icon-tile[data-icon-style="custom"] .icon-preview svg {
+  filter: none;
+}
+
+/* Selected bar — custom icons show in full color */
+.acf-icon-selected-preview[data-icon-style="custom"] svg {
+  filter: none;
 }
 
 /* Tooltip on hover — shown via title attr by browser, but also CSS tooltip */
