@@ -192,8 +192,13 @@ if ( ! class_exists( 'ACF_Field_Custom_Icon' ) ) :
 				return false;
 			}
 
+			// Resolve the path dynamically so it works across environments
+			// (e.g. local → WP Engine). The stored path may reference
+			// the original upload environment's filesystem.
+			$resolved_path = ACF_Icon_Storage::resolve_icon_path( $icon );
+
 			$result = array(
-				'path'  => isset( $icon['path'] ) ? $icon['path'] : '',
+				'path'  => $resolved_path,
 				'url'   => isset( $icon['url'] ) ? $icon['url'] : '',
 				'style' => isset( $icon['style'] ) ? $icon['style'] : 'line',
 			);

@@ -73,9 +73,10 @@ class ACF_Icon_Storage {
 
 		foreach ( $raw as $icon ) {
 			if ( isset( $icon['id'] ) ) {
-				// Reconstruct URL from filename to handle environment migrations.
+				// Reconstruct URL and path from filename to handle environment migrations.
 				if ( ! empty( $icon['filename'] ) ) {
-					$icon['url'] = $upload_url . '/' . $icon['filename'];
+					$icon['url']  = $upload_url . '/' . $icon['filename'];
+					$icon['path'] = self::get_upload_dir() . '/' . $icon['filename'];
 				}
 				$indexed[ $icon['id'] ] = $icon;
 			}
@@ -155,7 +156,7 @@ class ACF_Icon_Storage {
 	 * @param array $icon Icon entry array.
 	 * @return string Resolved path, or empty string if unresolvable.
 	 */
-	private static function resolve_icon_path( array $icon ) {
+	public static function resolve_icon_path( array $icon ) {
 		// Try the stored path first.
 		$stored_path = isset( $icon['path'] ) ? $icon['path'] : '';
 
