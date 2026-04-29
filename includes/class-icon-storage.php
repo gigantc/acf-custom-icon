@@ -82,11 +82,7 @@ class ACF_Icon_Storage {
 			}
 		}
 
-		// Sort alphabetically by icon name.
-		uasort( $indexed, function ( $a, $b ) {
-			return strnatcasecmp( $a['name'] ?? '', $b['name'] ?? '' );
-		} );
-
+		// Stored array order is the display order — no sort applied.
 		return $indexed;
 	}
 
@@ -253,12 +249,11 @@ class ACF_Icon_Storage {
 			'style'    => in_array( $style, array( 'line', 'custom' ), true ) ? $style : 'line',
 		);
 
-		// Append to the index and persist.
-		// get_all() returns ID-keyed array; convert back to sequential for storage.
-		$icons_indexed              = self::get_all();
-		$icons_indexed[ $id ]       = $entry;
+		// Prepend to the index so new icons appear first, then persist.
+		$icons_indexed = self::get_all();
+		$new_order     = array_merge( array( $id => $entry ), $icons_indexed );
 
-		update_option( self::OPTION_KEY, array_values( $icons_indexed ), false );
+		update_option( self::OPTION_KEY, array_values( $new_order ), false );
 
 		return $id;
 	}
@@ -287,6 +282,37 @@ class ACF_Icon_Storage {
 
 		$icons[ $id ]['name'] = $name;
 		update_option( self::OPTION_KEY, array_values( $icons ), false );
+
+		return true;
+	}
+
+	/**
+	 * Reorder the icon library.
+	 *
+	 * Accepts an array of icon IDs in the desired display order and rewrites
+	 * the option to match. Any IDs not present in the list are appended at the end.
+	 *
+	 * @param string[] $ordered_ids Ordered array of icon IDs.
+	 * @return bool True on success.
+	 */
+	public static function reorder( array $ordered_ids ) {
+		$icons     = self::get_all();
+		$reordered = array();
+
+		foreach ( $ordered_ids as $id ) {
+			if ( isset( $icons[ $id ] ) ) {
+				$reordered[ $id ] = $icons[ $id ];
+			}
+		}
+
+		// Append any icons missing from the submitted order as a safety net.
+		foreach ( $icons as $id => $icon ) {
+			if ( ! isset( $reordered[ $id ] ) ) {
+				$reordered[ $id ] = $icon;
+			}
+		}
+
+		update_option( self::OPTION_KEY, array_values( $reordered ), false );
 
 		return true;
 	}

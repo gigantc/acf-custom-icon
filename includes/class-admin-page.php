@@ -44,6 +44,7 @@ class ACF_Icon_Admin_Page {
 		add_action( 'admin_post_acf_icon_upload', array( $this, 'handle_upload' ) );
 		add_action( 'admin_post_acf_icon_delete', array( $this, 'handle_delete' ) );
 		add_action( 'admin_post_acf_icon_rename', array( $this, 'handle_rename' ) );
+		add_action( 'wp_ajax_acf_icon_reorder', array( $this, 'handle_reorder' ) );
 	}
 
 	/**
@@ -83,12 +84,23 @@ class ACF_Icon_Admin_Page {
 			$version
 		);
 
+		wp_enqueue_script( 'jquery-ui-sortable' );
+
 		wp_enqueue_script(
 			'acf-icon-library-admin',
 			plugin_dir_url( dirname( __FILE__ ) ) . 'assets/js/admin.js',
-			array(),
+			array( 'jquery', 'jquery-ui-sortable' ),
 			$version,
 			true
+		);
+
+		wp_localize_script(
+			'acf-icon-library-admin',
+			'acfIconLibrary',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( self::NONCE_ACTION ),
+			)
 		);
 	}
 
@@ -184,7 +196,10 @@ class ACF_Icon_Admin_Page {
 			</div>
 
 			<div class="acf-icon-library__grid-section">
-				<h2><?php esc_html_e( 'Saved Icons', 'acf-custom-icon' ); ?></h2>
+				<h2>
+					<?php esc_html_e( 'Saved Icons', 'acf-custom-icon' ); ?>
+					<span id="acf-icon-order-saved"><?php esc_html_e( 'Order saved', 'acf-custom-icon' ); ?></span>
+				</h2>
 
 				<?php if ( empty( $icons ) ) : ?>
 					<p><?php esc_html_e( 'No icons uploaded yet.', 'acf-custom-icon' ); ?></p>
@@ -195,7 +210,10 @@ class ACF_Icon_Admin_Page {
 							$icon_name = esc_html( $icon['name'] );
 						?>
 							<?php $icon_style = $icon['style'] ?? 'line'; ?>
-						<div class="acf-icon-item" data-icon-style="<?php echo esc_attr( $icon_style ); ?>">
+						<div class="acf-icon-item" data-icon-id="<?php echo $icon_id; ?>" data-icon-style="<?php echo esc_attr( $icon_style ); ?>">
+								<div class="acf-icon-item__drag-handle" title="<?php esc_attr_e( 'Drag to reorder', 'acf-custom-icon' ); ?>">
+									<span class="dashicons dashicons-menu" aria-hidden="true"></span>
+								</div>
 								<div class="acf-icon-item__inner">
 									<div class="acf-icon-item__preview">
 										<?php $this->render_icon_preview( $icon ); ?>
@@ -417,6 +435,28 @@ class ACF_Icon_Admin_Page {
 		} else {
 			$this->redirect_with_notice( 'error', __( 'Failed to rename icon. Please try again.', 'acf-custom-icon' ) );
 		}
+	}
+
+	/**
+	 * Handle icon reorder AJAX request.
+	 *
+	 * @return void
+	 */
+	public function handle_reorder(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'Insufficient permissions.' );
+		}
+
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['nonce'] ), self::NONCE_ACTION ) ) {
+			wp_send_json_error( 'Security check failed.' );
+		}
+
+		$raw_ids     = isset( $_POST['order'] ) ? (array) $_POST['order'] : array();
+		$ordered_ids = array_map( 'sanitize_text_field', $raw_ids );
+
+		ACF_Icon_Storage::reorder( $ordered_ids );
+
+		wp_send_json_success();
 	}
 
 	/**

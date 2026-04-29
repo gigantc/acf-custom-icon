@@ -164,3 +164,56 @@
 .acf-icon-library__upload-section {
     max-width: 500px;
 }
+
+/* Drag handle */
+.acf-icon-item__drag-handle {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    cursor: grab;
+    color: #c3c4c7;
+    margin-bottom: 4px;
+    padding: 2px 0;
+    border-radius: 4px;
+    transition: color 0.1s, background 0.1s;
+}
+
+.acf-icon-item__drag-handle:hover {
+    color: #787c82;
+    background: #ebebec;
+}
+
+.acf-icon-item__drag-handle:active {
+    cursor: grabbing;
+}
+
+.acf-icon-item__drag-handle .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* Drag placeholder */
+.acf-icon-placeholder {
+    width: 160px;
+    border: 2px dashed #c3c4c7;
+    border-radius: 8px;
+    background: #f0f6fc;
+    visibility: visible !important;
+}
+
+/* Dragging state */
+.acf-icon-item.ui-sortable-helper {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    opacity: 0.9;
+}
+
+/* Order saved confirmation */
+#acf-icon-order-saved {
+    display: none;
+    margin-left: 12px;
+    color: #007017;
+    font-size: 13px;
+    font-weight: 500;
+    vertical-align: middle;
+}

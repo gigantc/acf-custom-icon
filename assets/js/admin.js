@@ -1,7 +1,7 @@
-(function() {
+(function($) {
     'use strict';
 
-    document.addEventListener('DOMContentLoaded', function() {
+    $(function() {
 
         // Delete confirm
         document.querySelectorAll('.icon-delete-form').forEach(function(form) {
@@ -35,5 +35,37 @@
             });
         });
 
+        // Drag-to-reorder
+        var $grid = $('.acf-icon-library__grid');
+        if ($grid.length) {
+            $grid.sortable({
+                handle: '.acf-icon-item__drag-handle',
+                tolerance: 'pointer',
+                placeholder: 'acf-icon-placeholder',
+                forcePlaceholderSize: true,
+                stop: function() {
+                    var order = [];
+                    $grid.find('.acf-icon-item').each(function() {
+                        order.push($(this).data('icon-id'));
+                    });
+
+                    $.post(acfIconLibrary.ajaxUrl, {
+                        action: 'acf_icon_reorder',
+                        nonce:  acfIconLibrary.nonce,
+                        order:  order
+                    }).done(function(res) {
+                        if (res.success) {
+                            var msg = document.getElementById('acf-icon-order-saved');
+                            if (msg) {
+                                msg.style.display = 'inline';
+                                setTimeout(function() { msg.style.display = 'none'; }, 2000);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
     });
-})();
+
+})(jQuery);
