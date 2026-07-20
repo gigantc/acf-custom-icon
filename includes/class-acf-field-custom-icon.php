@@ -116,7 +116,6 @@ if ( ! class_exists( 'ACF_Field_Custom_Icon' ) ) :
 								<label
 									class="<?php echo esc_attr( $tile_class ); ?>"
 									data-icon-name="<?php echo esc_attr( $icon_name ); ?>"
-									data-icon-svg="<?php echo esc_attr( $svg_content ); ?>"
 									data-icon-style="<?php echo esc_attr( $icon_style ); ?>"
 									title="<?php echo esc_attr( $icon_name ); ?>"
 								>

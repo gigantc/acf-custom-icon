@@ -11,12 +11,17 @@
         if (!nameEl || !previewEl) return;
 
         var iconName = tile.getAttribute('title') || 'None';
-        var iconSvg = tile.getAttribute('data-icon-svg');
         var iconStyle = tile.getAttribute('data-icon-style') || 'line';
+        var tilePreview = tile.querySelector('.icon-preview');
 
         nameEl.textContent = iconName;
         previewEl.setAttribute('data-icon-style', iconStyle);
-        previewEl.innerHTML = iconSvg ? iconSvg : '<span class="dashicons dashicons-minus"></span>';
+
+        if (tilePreview && !tilePreview.classList.contains('icon-preview--empty')) {
+            previewEl.innerHTML = tilePreview.innerHTML;
+        } else {
+            previewEl.innerHTML = '<span class="dashicons dashicons-minus"></span>';
+        }
     }
 
     function togglePanel(picker, forceOpen) {

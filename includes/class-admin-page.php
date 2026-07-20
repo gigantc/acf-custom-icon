@@ -206,11 +206,11 @@ class ACF_Icon_Admin_Page {
 				<?php else : ?>
 					<div class="acf-icon-library__grid">
 						<?php foreach ( $icons as $icon ) :
-							$icon_id   = esc_attr( $icon['id'] );
-							$icon_name = esc_html( $icon['name'] );
+							$icon_id   = $icon['id'];
+							$icon_name = $icon['name'];
 						?>
 							<?php $icon_style = $icon['style'] ?? 'line'; ?>
-						<div class="acf-icon-item" data-icon-id="<?php echo $icon_id; ?>" data-icon-style="<?php echo esc_attr( $icon_style ); ?>">
+						<div class="acf-icon-item" data-icon-id="<?php echo esc_attr( $icon_id ); ?>" data-icon-style="<?php echo esc_attr( $icon_style ); ?>">
 								<div class="acf-icon-item__drag-handle" title="<?php esc_attr_e( 'Drag to reorder', 'acf-custom-icon' ); ?>">
 									<span class="dashicons dashicons-menu" aria-hidden="true"></span>
 								</div>
@@ -231,11 +231,11 @@ class ACF_Icon_Admin_Page {
 										method="post"
 										action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
 										class="icon-delete-form"
-										data-icon-name="<?php echo $icon_name; ?>"
+										data-icon-name="<?php echo esc_attr( $icon_name ); ?>"
 									>
 										<?php wp_nonce_field( self::NONCE_ACTION, '_nonce' ); ?>
 										<input type="hidden" name="action" value="acf_icon_delete">
-										<input type="hidden" name="icon_id" value="<?php echo $icon_id; ?>">
+										<input type="hidden" name="icon_id" value="<?php echo esc_attr( $icon_id ); ?>">
 										<button type="submit" class="icon-action-btn icon-action-btn--delete" title="Delete">
 											<span class="dashicons dashicons-trash" aria-hidden="true"></span>
 											<span class="screen-reader-text"><?php esc_html_e( 'Delete', 'acf-custom-icon' ); ?></span>
@@ -249,11 +249,11 @@ class ACF_Icon_Admin_Page {
 									>
 										<?php wp_nonce_field( self::NONCE_ACTION, '_nonce' ); ?>
 										<input type="hidden" name="action" value="acf_icon_rename">
-										<input type="hidden" name="icon_id" value="<?php echo $icon_id; ?>">
+										<input type="hidden" name="icon_id" value="<?php echo esc_attr( $icon_id ); ?>">
 										<input
 											type="text"
 											name="icon_name"
-											value="<?php echo $icon_name; ?>"
+											value="<?php echo esc_attr( $icon_name ); ?>"
 											required
 										>
 										<div class="rename-actions">

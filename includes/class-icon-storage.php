@@ -35,6 +35,13 @@ class ACF_Icon_Storage {
 	const OPTION_KEY = 'acf_custom_icons';
 
 	/**
+	 * Request-scoped cache of the resolved icon index.
+	 *
+	 * @var array|null
+	 */
+	private static $cache = null;
+
+	/**
 	 * Get the absolute path to the icons uploads directory.
 	 *
 	 * @return string
@@ -61,14 +68,20 @@ class ACF_Icon_Storage {
 	 * @return array Associative array of icon entries keyed by icon ID.
 	 */
 	public static function get_all() {
+		if ( null !== self::$cache ) {
+			return self::$cache;
+		}
+
 		$raw = get_option( self::OPTION_KEY, array() );
 
 		if ( ! is_array( $raw ) ) {
-			return array();
+			self::$cache = array();
+			return self::$cache;
 		}
 
 		// Re-index by icon ID and fix URLs/paths for the current environment.
 		$upload_url = self::get_upload_url();
+		$upload_dir = self::get_upload_dir();
 		$indexed    = array();
 
 		foreach ( $raw as $icon ) {
@@ -76,14 +89,25 @@ class ACF_Icon_Storage {
 				// Reconstruct URL and path from filename to handle environment migrations.
 				if ( ! empty( $icon['filename'] ) ) {
 					$icon['url']  = $upload_url . '/' . $icon['filename'];
-					$icon['path'] = self::get_upload_dir() . '/' . $icon['filename'];
+					$icon['path'] = $upload_dir . '/' . $icon['filename'];
 				}
 				$indexed[ $icon['id'] ] = $icon;
 			}
 		}
 
-		// Stored array order is the display order — no sort applied.
-		return $indexed;
+		self::$cache = $indexed;
+		return self::$cache;
+	}
+
+	/**
+	 * Invalidate the request-scoped cache.
+	 *
+	 * Called after any mutation so subsequent reads see fresh data.
+	 *
+	 * @return void
+	 */
+	private static function flush_cache() {
+		self::$cache = null;
 	}
 
 	/**
@@ -254,6 +278,7 @@ class ACF_Icon_Storage {
 		$new_order     = array_merge( array( $id => $entry ), $icons_indexed );
 
 		update_option( self::OPTION_KEY, array_values( $new_order ), false );
+		self::flush_cache();
 
 		return $id;
 	}
@@ -282,6 +307,7 @@ class ACF_Icon_Storage {
 
 		$icons[ $id ]['name'] = $name;
 		update_option( self::OPTION_KEY, array_values( $icons ), false );
+		self::flush_cache();
 
 		return true;
 	}
@@ -313,6 +339,7 @@ class ACF_Icon_Storage {
 		}
 
 		update_option( self::OPTION_KEY, array_values( $reordered ), false );
+		self::flush_cache();
 
 		return true;
 	}
@@ -352,6 +379,7 @@ class ACF_Icon_Storage {
 
 		// Save as sequential array (get_all re-indexes on read).
 		update_option( self::OPTION_KEY, array_values( $icons ), false );
+		self::flush_cache();
 
 		return true;
 	}
