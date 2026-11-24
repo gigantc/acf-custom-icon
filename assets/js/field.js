@@ -1,6 +1,13 @@
 (function() {
     'use strict';
 
+    var i18n = window.acfCustomIconI18n || {};
+    var text = {
+        none: i18n.none || 'None',
+        edit: i18n.edit || 'Edit',
+        close: i18n.close || 'Close'
+    };
+
     function getPicker(el) {
         return el.closest ? el.closest('.acf-icon-picker-wrap') : null;
     }
@@ -10,7 +17,7 @@
         var previewEl = picker.querySelector('.acf-icon-selected-preview');
         if (!nameEl || !previewEl) return;
 
-        var iconName = tile.getAttribute('title') || 'None';
+        var iconName = tile.getAttribute('title') || text.none;
         var iconStyle = tile.getAttribute('data-icon-style') || 'line';
         var tilePreview = tile.querySelector('.icon-preview');
 
@@ -32,7 +39,7 @@
         var isOpen = panel.style.display !== 'none' && panel.style.display !== '';
         var open = (typeof forceOpen === 'boolean') ? forceOpen : !isOpen;
         panel.style.display = open ? 'block' : 'none';
-        if (editBtn) editBtn.textContent = open ? 'Close' : 'Edit';
+        if (editBtn) editBtn.textContent = open ? text.close : text.edit;
     }
 
     function selectTile(picker, tile) {

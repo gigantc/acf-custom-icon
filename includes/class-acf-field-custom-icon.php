@@ -50,20 +50,14 @@ if ( ! class_exists( 'ACF_Field_Custom_Icon' ) ) :
 			$icons         = class_exists( 'ACF_Icon_Storage' ) ? ACF_Icon_Storage::get_all() : array();
 			$current_value = isset( $field['value'] ) ? $field['value'] : '';
 
-			// Allowed SVG tags and attributes for wp_kses().
-			$allowed_svg = $this->get_allowed_svg_tags();
-
 			// Get selected icon info for the preview bar.
-			$selected_name  = 'None';
+			$selected_name  = __( 'None', 'acf-custom-icon' );
 			$selected_svg   = '';
 			$selected_style = 'line';
 			if ( ! empty( $current_value ) && isset( $icons[ $current_value ] ) ) {
 				$selected_name  = $icons[ $current_value ]['name'] ?? $current_value;
 				$selected_style = $icons[ $current_value ]['style'] ?? 'line';
-				$svg_raw        = ACF_Icon_Storage::get_svg_content( $current_value );
-				if ( $svg_raw ) {
-					$selected_svg = wp_kses( $svg_raw, $allowed_svg );
-				}
+				$selected_svg   = ACF_Icon_Storage::get_preview_markup( $current_value );
 			}
 			?>
 			<div class="acf-icon-picker-wrap" id="<?php echo esc_attr( $field['id'] ); ?>">
@@ -81,8 +75,15 @@ if ( ! class_exists( 'ACF_Field_Custom_Icon' ) ) :
 
 				<div class="acf-icon-picker-panel" style="display:none;">
 					<div class="acf-icon-search">
-						<span class="dashicons dashicons-search"></span>
-						<input type="text" class="acf-icon-search-input" placeholder="Search icons..." autocomplete="off" />
+						<span class="dashicons dashicons-search" aria-hidden="true"></span>
+						<label class="screen-reader-text" for="<?php echo esc_attr( $field['id'] ); ?>-search"><?php esc_html_e( 'Search icons', 'acf-custom-icon' ); ?></label>
+						<input
+							type="text"
+							id="<?php echo esc_attr( $field['id'] ); ?>-search"
+							class="acf-icon-search-input"
+							placeholder="<?php esc_attr_e( 'Search icons...', 'acf-custom-icon' ); ?>"
+							autocomplete="off"
+						/>
 					</div>
 
 					<div class="icon-tiles-grid">
@@ -91,7 +92,7 @@ if ( ! class_exists( 'ACF_Field_Custom_Icon' ) ) :
 							class="icon-tile<?php echo ( '' === $current_value ) ? ' selected' : ''; ?>"
 							data-icon-name=""
 							data-icon-svg=""
-							title="None"
+							title="<?php esc_attr_e( 'None', 'acf-custom-icon' ); ?>"
 						>
 							<input
 								type="radio"
@@ -107,7 +108,7 @@ if ( ! class_exists( 'ACF_Field_Custom_Icon' ) ) :
 						<?php if ( ! empty( $icons ) ) : ?>
 							<?php foreach ( $icons as $icon_id => $icon ) : ?>
 								<?php
-								$svg_content = class_exists( 'ACF_Icon_Storage' ) ? ACF_Icon_Storage::get_svg_content( $icon_id ) : '';
+								$svg_content = class_exists( 'ACF_Icon_Storage' ) ? ACF_Icon_Storage::get_preview_markup( $icon_id ) : '';
 								$icon_name   = isset( $icon['name'] ) ? $icon['name'] : $icon_id;
 								$icon_style  = isset( $icon['style'] ) ? $icon['style'] : 'line';
 								$is_selected = ( (string) $icon_id === (string) $current_value );
@@ -128,7 +129,12 @@ if ( ! class_exists( 'ACF_Field_Custom_Icon' ) ) :
 									<div class="icon-preview">
 										<?php
 										if ( ! empty( $svg_content ) ) {
-											echo wp_kses( $svg_content, $allowed_svg );
+											echo $svg_content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already passed through wp_kses().
+										} elseif ( class_exists( 'ACF_Icon_Storage' ) && ! ACF_Icon_Storage::has_file( $icon ) ) {
+											?>
+											<span class="dashicons dashicons-warning" title="<?php esc_attr_e( 'File missing', 'acf-custom-icon' ); ?>"></span>
+											<span class="screen-reader-text"><?php esc_html_e( 'File missing', 'acf-custom-icon' ); ?></span>
+											<?php
 										}
 										?>
 									</div>
@@ -234,22 +240,20 @@ if ( ! class_exists( 'ACF_Field_Custom_Icon' ) ) :
 			wp_enqueue_script(
 				'acf-custom-icon-field',
 				$plugin_url . 'js/field.js',
-				array( 'jquery', 'acf-input' ),
+				array( 'acf-input' ),
 				$version,
 				true
 			);
-		}
 
-		/**
-		 * Returns the allowed SVG tags and attributes array for wp_kses().
-		 *
-		 * Delegates to ACF_SVG_Sanitizer::get_allowed_svg_tags() so the
-		 * allowlist is defined in one place.
-		 *
-		 * @return array Allowed tags and attributes for wp_kses().
-		 */
-		private function get_allowed_svg_tags() {
-			return ACF_SVG_Sanitizer::get_allowed_svg_tags();
+			wp_localize_script(
+				'acf-custom-icon-field',
+				'acfCustomIconI18n',
+				array(
+					'none'  => __( 'None', 'acf-custom-icon' ),
+					'edit'  => __( 'Edit', 'acf-custom-icon' ),
+					'close' => __( 'Close', 'acf-custom-icon' ),
+				)
+			);
 		}
 	}
 

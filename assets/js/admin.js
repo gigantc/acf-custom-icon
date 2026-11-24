@@ -3,13 +3,37 @@
 
     $(function() {
 
-        // Delete confirm
+        // Delete confirm. Asks the server where the icon is used first; any failure falls back to the plain confirm.
+        var i18n = acfIconLibrary.i18n || {};
+
         document.querySelectorAll('.icon-delete-form').forEach(function(form) {
             form.addEventListener('submit', function(e) {
-                var name = form.dataset.iconName || 'this icon';
-                if (!confirm('Delete "' + name + '"? This cannot be undone.')) {
-                    e.preventDefault();
-                }
+                if (form.dataset.confirmed === '1') return;
+                e.preventDefault();
+
+                var name = form.dataset.iconName || i18n.thisIcon || 'this icon';
+                var plainConfirm = function() {
+                    return confirm((i18n.confirmDelete || 'Delete "%s"? This cannot be undone.').replace('%s', function() { return name; }));
+                };
+                var proceed = function(ok) {
+                    if (!ok) return;
+                    form.dataset.confirmed = '1';
+                    HTMLFormElement.prototype.submit.call(form);
+                };
+
+                $.post(acfIconLibrary.ajaxUrl, {
+                    action:  'acf_icon_usage',
+                    nonce:   acfIconLibrary.nonce,
+                    icon_id: form.querySelector('input[name="icon_id"]').value
+                }).done(function(res) {
+                    if (res && res.success && res.data && res.data.message) {
+                        proceed(confirm(res.data.message));
+                    } else {
+                        proceed(plainConfirm());
+                    }
+                }).fail(function() {
+                    proceed(plainConfirm());
+                });
             });
         });
 

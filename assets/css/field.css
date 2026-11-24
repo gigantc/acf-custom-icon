@@ -186,3 +186,8 @@
   font-size: 13px;
   margin: 0;
 }
+
+/* Icon whose file is not on disk */
+.icon-tile .icon-preview .dashicons-warning {
+    color: #b32d2e;
+}

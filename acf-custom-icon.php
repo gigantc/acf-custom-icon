@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ACF Custom Icon
  * Description: Adds a Custom Icon field type to Advanced Custom Fields with an icon library manager.
- * Version: 1.5.2
+ * Version: 1.5.3
  * Author: Dan Freeman
  *
  * @package ACF_Custom_Icon
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ACF_CUSTOM_ICON_VERSION', '1.5.2' );
+define( 'ACF_CUSTOM_ICON_VERSION', '1.5.3' );
 define( 'ACF_CUSTOM_ICON_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ACF_CUSTOM_ICON_URL', plugin_dir_url( __FILE__ ) );
 
@@ -71,29 +71,9 @@ add_action( 'plugins_loaded', 'acf_custom_icon_load' );
  * Plugin activation: create uploads directory and security files.
  */
 function acf_custom_icon_activate() {
-	$upload_dir = wp_upload_dir();
-	$icons_dir  = $upload_dir['basedir'] . '/acf-custom-icons';
+	require_once ACF_CUSTOM_ICON_DIR . 'includes/class-icon-storage.php';
 
-	if ( ! file_exists( $icons_dir ) ) {
-		wp_mkdir_p( $icons_dir );
-	}
-
-	// Add .htaccess to prevent directory listing.
-	$htaccess_file = $icons_dir . '/.htaccess';
-	if ( ! file_exists( $htaccess_file ) ) {
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-		file_put_contents(
-			$htaccess_file,
-			"Options -Indexes\n"
-		);
-	}
-
-	// Add index.php to prevent directory listing on servers without .htaccess.
-	$index_file = $icons_dir . '/index.php';
-	if ( ! file_exists( $index_file ) ) {
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-		file_put_contents( $index_file, '<?php // Silence is golden.' );
-	}
+	ACF_Icon_Storage::ensure_directory();
 }
 
 register_activation_hook( __FILE__, 'acf_custom_icon_activate' );

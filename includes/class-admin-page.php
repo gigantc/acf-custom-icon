@@ -39,12 +39,14 @@ class ACF_Icon_Admin_Page {
 	 * @return void
 	 */
 	public function init(): void {
+		add_action( 'admin_init', array( 'ACF_Icon_Storage', 'maybe_resanitize' ) );
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_post_acf_icon_upload', array( $this, 'handle_upload' ) );
 		add_action( 'admin_post_acf_icon_delete', array( $this, 'handle_delete' ) );
 		add_action( 'admin_post_acf_icon_rename', array( $this, 'handle_rename' ) );
 		add_action( 'wp_ajax_acf_icon_reorder', array( $this, 'handle_reorder' ) );
+		add_action( 'wp_ajax_acf_icon_usage', array( $this, 'handle_usage' ) );
 	}
 
 	/**
@@ -100,6 +102,10 @@ class ACF_Icon_Admin_Page {
 			array(
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( self::NONCE_ACTION ),
+				'i18n'    => array(
+					'confirmDelete' => __( 'Delete "%s"? This cannot be undone.', 'acf-custom-icon' ),
+					'thisIcon'      => __( 'this icon', 'acf-custom-icon' ),
+				),
 			)
 		);
 	}
@@ -114,8 +120,9 @@ class ACF_Icon_Admin_Page {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'acf-custom-icon' ) );
 		}
 
-		$notice = $this->get_notice();
-		$icons  = ACF_Icon_Storage::get_all();
+		$notice  = $this->get_notice();
+		$summary = $this->get_resanitize_summary();
+		$icons   = ACF_Icon_Storage::get_all();
 		?>
 		<div class="wrap acf-icon-library">
 			<h1><?php esc_html_e( 'Icon Library', 'acf-custom-icon' ); ?></h1>
@@ -123,6 +130,12 @@ class ACF_Icon_Admin_Page {
 			<?php if ( $notice ) : ?>
 				<div class="notice notice-<?php echo esc_attr( $notice['type'] ); ?> is-dismissible">
 					<p><?php echo esc_html( $notice['message'] ); ?></p>
+				</div>
+			<?php endif; ?>
+
+			<?php if ( $summary ) : ?>
+				<div class="notice notice-<?php echo esc_attr( $summary['type'] ); ?> is-dismissible">
+					<p><?php echo esc_html( $summary['message'] ); ?></p>
 				</div>
 			<?php endif; ?>
 
@@ -278,35 +291,80 @@ class ACF_Icon_Admin_Page {
 	}
 
 	/**
-	 * Render a single icon preview (inline SVG or img fallback).
+	 * Render a single icon preview (inline SVG, or a missing-file placeholder).
 	 *
-	 * @param array $icon Icon data array with at least 'id' and 'type' keys.
+	 * @param array $icon Icon data array with at least an 'id' key.
 	 * @return void
 	 */
 	private function render_icon_preview( array $icon ): void {
-		$id   = $icon['id'];
-		$type = $icon['type'] ?? '';
+		$markup = ACF_Icon_Storage::get_preview_markup( $icon['id'] );
 
-		if ( 'svg' === $type ) {
-			$svg_content = ACF_Icon_Storage::get_svg_content( $id );
-
-			if ( $svg_content ) {
-				// Define allowed SVG tags and attributes for wp_kses().
-				$allowed_svg = ACF_SVG_Sanitizer::get_allowed_svg_tags();
-				echo wp_kses( $svg_content, $allowed_svg );
-				return;
-			}
+		if ( '' === $markup ) {
+			$this->render_missing_file();
+			return;
 		}
 
-		// PNG or SVG content unavailable — use img tag fallback.
-		$url = $icon['url'] ?? '';
-		if ( $url ) {
-			printf(
-				'<img src="%s" alt="%s" class="acf-icon-library__img">',
-				esc_url( $url ),
-				esc_attr( $icon['name'] ?? '' )
-			);
+		echo $markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already passed through wp_kses().
+	}
+
+	/**
+	 * Render the placeholder for an icon whose file is not on disk.
+	 *
+	 * @return void
+	 */
+	private function render_missing_file(): void {
+		?>
+		<span class="acf-icon-item__missing">
+			<span class="dashicons dashicons-warning" aria-hidden="true"></span>
+			<?php esc_html_e( 'File missing', 'acf-custom-icon' ); ?>
+		</span>
+		<?php
+	}
+
+	/**
+	 * Get and clear the stored re-sanitize summary as a notice.
+	 *
+	 * @return array|null Array with 'type' and 'message' keys, or null.
+	 */
+	private function get_resanitize_summary(): ?array {
+		$summary = get_option( ACF_Icon_Storage::RESANITIZE_SUMMARY_KEY );
+
+		if ( ! is_array( $summary ) ) {
+			return null;
 		}
+
+		delete_option( ACF_Icon_Storage::RESANITIZE_SUMMARY_KEY );
+
+		if ( empty( $summary['checked'] ) ) {
+			return null;
+		}
+
+		$message = sprintf(
+			/* translators: 1: icons checked, 2: rewritten, 3: unchanged, 4: rejected, 5: missing. */
+			__( 'Icon library re-sanitized: %1$d checked, %2$d rewritten, %3$d unchanged, %4$d rejected, %5$d missing.', 'acf-custom-icon' ),
+			$summary['checked'],
+			$summary['rewritten'],
+			$summary['unchanged'],
+			$summary['rejected'],
+			$summary['missing']
+		);
+
+		if ( ! empty( $summary['failed'] ) ) {
+			/* translators: %d: number of icons that could not be written. */
+			$message .= ' ' . sprintf( __( '%d could not be rewritten.', 'acf-custom-icon' ), $summary['failed'] );
+		}
+
+		if ( ! empty( $summary['rejected_names'] ) ) {
+			/* translators: %s: comma-separated icon names. */
+			$message .= ' ' . sprintf( __( 'Rejected icons were left as they are: %s.', 'acf-custom-icon' ), implode( ', ', $summary['rejected_names'] ) );
+		}
+
+		$problem = ! empty( $summary['rejected'] ) || ! empty( $summary['missing'] ) || ! empty( $summary['failed'] );
+
+		return array(
+			'type'    => $problem ? 'warning' : 'success',
+			'message' => $message,
+		);
 	}
 
 	/**
@@ -348,21 +406,16 @@ class ACF_Icon_Admin_Page {
 			return;
 		}
 
-		$ext     = $file_type['ext'];
-		$raw_svg = null;
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local temp file.
+		$raw_svg = file_get_contents( $file['tmp_name'] );
 
-		if ( 'svg' === $ext ) {
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local temp file.
-			$raw_svg = file_get_contents( $file['tmp_name'] );
-
-			if ( false === $raw_svg ) {
-				$this->redirect_with_notice( 'error', __( 'Could not read uploaded file.', 'acf-custom-icon' ) );
-				return;
-			}
+		if ( false === $raw_svg ) {
+			$this->redirect_with_notice( 'error', __( 'Could not read uploaded file.', 'acf-custom-icon' ) );
+			return;
 		}
 
 		$icon_style = isset( $_POST['icon_style'] ) ? sanitize_text_field( wp_unslash( $_POST['icon_style'] ) ) : 'line';
-		$result     = ACF_Icon_Storage::add( $icon_name, $raw_svg, $ext, $file, $icon_style );
+		$result     = ACF_Icon_Storage::add( $icon_name, $raw_svg, $icon_style );
 
 		if ( $result && ! is_wp_error( $result ) ) {
 			$removed = $this->summarize_sanitizer_report( ACF_SVG_Sanitizer::get_last_report() );
@@ -515,6 +568,70 @@ class ACF_Icon_Admin_Page {
 		} else {
 			$this->redirect_with_notice( 'error', __( 'Failed to rename icon. Please try again.', 'acf-custom-icon' ) );
 		}
+	}
+
+	/**
+	 * Handle the AJAX check for where an icon is used, run before a delete is confirmed.
+	 *
+	 * Responds with a ready-to-show confirm message, or an empty message when
+	 * the icon is not in use. Only warns; it never blocks the delete.
+	 *
+	 * @return void
+	 */
+	public function handle_usage(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'Insufficient permissions.' );
+		}
+
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['nonce'] ), self::NONCE_ACTION ) ) {
+			wp_send_json_error( 'Security check failed.' );
+		}
+
+		$icon_id = isset( $_POST['icon_id'] ) ? sanitize_text_field( wp_unslash( $_POST['icon_id'] ) ) : '';
+		$icon    = $icon_id ? ACF_Icon_Storage::get_by_id( $icon_id ) : false;
+
+		if ( ! $icon ) {
+			wp_send_json_error( 'Invalid icon ID.' );
+		}
+
+		$usage  = ACF_Icon_Storage::get_usage( $icon_id );
+		$places = count( $usage['posts'] ) + ( $usage['options'] ? 1 : 0 );
+
+		if ( ! $places ) {
+			wp_send_json_success( array( 'message' => '' ) );
+		}
+
+		$labels = array();
+
+		foreach ( array_slice( $usage['posts'], 0, 5 ) as $post ) {
+			$labels[] = '' !== trim( $post['title'] ) ? $post['title'] : '#' . $post['id'];
+		}
+
+		if ( $usage['options'] ) {
+			$labels[] = __( 'Options page', 'acf-custom-icon' );
+		}
+
+		$list = implode( ', ', $labels );
+
+		if ( count( $usage['posts'] ) > 5 ) {
+			/* translators: %d: number of additional posts not listed. */
+			$list .= sprintf( __( ' and %d more', 'acf-custom-icon' ), count( $usage['posts'] ) - 5 );
+		}
+
+		$message = sprintf(
+			/* translators: 1: icon name, 2: number of places, 3: list of where it is used. */
+			_n(
+				'"%1$s" is used in %2$d place: %3$s. Delete it anyway? This cannot be undone.',
+				'"%1$s" is used in %2$d places: %3$s. Delete it anyway? This cannot be undone.',
+				$places,
+				'acf-custom-icon'
+			),
+			$icon['name'],
+			$places,
+			$list
+		);
+
+		wp_send_json_success( array( 'message' => $message ) );
 	}
 
 	/**
