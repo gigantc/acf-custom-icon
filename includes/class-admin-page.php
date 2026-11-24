@@ -365,10 +365,90 @@ class ACF_Icon_Admin_Page {
 		$result     = ACF_Icon_Storage::add( $icon_name, $raw_svg, $ext, $file, $icon_style );
 
 		if ( $result && ! is_wp_error( $result ) ) {
-			$this->redirect_with_notice( 'success', __( 'Icon uploaded successfully.', 'acf-custom-icon' ) );
+			$removed = $this->summarize_sanitizer_report( ACF_SVG_Sanitizer::get_last_report() );
+
+			if ( $removed ) {
+				/* translators: %s: summary of what the sanitizer removed or changed. */
+				$message = sprintf( __( 'Icon uploaded. Removed: %s', 'acf-custom-icon' ), $removed );
+			} else {
+				$message = __( 'Icon uploaded successfully.', 'acf-custom-icon' );
+			}
+
+			$this->redirect_with_notice( 'success', $message );
 		} else {
+			$report = ACF_SVG_Sanitizer::get_last_report();
+
+			if ( is_wp_error( $result ) && 'sanitize_failed' === $result->get_error_code() && ! empty( $report['rejected'] ) ) {
+				/* translators: %s: reason the SVG was rejected, e.g. "contains a DOCTYPE/entity declaration". */
+				$this->redirect_with_notice( 'error', sprintf( __( 'SVG rejected: it %s.', 'acf-custom-icon' ), $report['rejected'] ) );
+				return;
+			}
+
 			$this->redirect_with_notice( 'error', __( 'Failed to save icon. Please try again.', 'acf-custom-icon' ) );
 		}
+	}
+
+	/**
+	 * Build a short, human-readable summary of what the sanitizer removed or changed.
+	 *
+	 * @param array $report Report from ACF_SVG_Sanitizer::get_last_report().
+	 * @return string Comma-separated summary, empty when nothing was removed.
+	 */
+	private function summarize_sanitizer_report( array $report ): string {
+		$parts = array();
+
+		if ( ! empty( $report['style_blocks'] ) ) {
+			$parts[] = sprintf(
+				/* translators: %d: number of style blocks. */
+				_n( '%d style block (inlined)', '%d style blocks (inlined)', $report['style_blocks'], 'acf-custom-icon' ),
+				$report['style_blocks']
+			);
+		}
+
+		if ( ! empty( $report['elements'] ) ) {
+			$parts[] = sprintf(
+				/* translators: 1: number of elements, 2: element names. */
+				_n( '%1$d unsupported element (%2$s)', '%1$d unsupported elements (%2$s)', array_sum( $report['elements'] ), 'acf-custom-icon' ),
+				array_sum( $report['elements'] ),
+				$this->list_names( array_keys( $report['elements'] ) )
+			);
+		}
+
+		if ( ! empty( $report['attributes'] ) ) {
+			$parts[] = sprintf(
+				/* translators: 1: number of attributes, 2: attribute names. */
+				_n( '%1$d unsupported attribute (%2$s)', '%1$d unsupported attributes (%2$s)', array_sum( $report['attributes'] ), 'acf-custom-icon' ),
+				array_sum( $report['attributes'] ),
+				$this->list_names( array_keys( $report['attributes'] ) )
+			);
+		}
+
+		if ( ! empty( $report['css_dropped'] ) ) {
+			$parts[] = sprintf(
+				/* translators: %d: number of CSS rules or declarations. */
+				_n( '%d unsupported CSS rule', '%d unsupported CSS rules', count( $report['css_dropped'] ), 'acf-custom-icon' ),
+				count( $report['css_dropped'] )
+			);
+		}
+
+		return implode( ', ', $parts );
+	}
+
+	/**
+	 * Join up to five names, noting how many more there are.
+	 *
+	 * @param string[] $names Names to list.
+	 * @return string
+	 */
+	private function list_names( array $names ): string {
+		$shown = implode( ', ', array_slice( $names, 0, 5 ) );
+
+		if ( count( $names ) > 5 ) {
+			/* translators: %d: number of additional names not listed. */
+			$shown .= sprintf( __( ' and %d more', 'acf-custom-icon' ), count( $names ) - 5 );
+		}
+
+		return $shown;
 	}
 
 	/**
